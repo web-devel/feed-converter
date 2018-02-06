@@ -1,0 +1,7 @@
+{
+  "name": "bbc-feed-converter",
+  "version": "1.0.0",
+  "repository": "git@git.haulmont.com:minaev/bbc-feed-converter",
+  "author": "Vlad Minaev <minaev@haulmont.com>",
+  "private": true
+}
