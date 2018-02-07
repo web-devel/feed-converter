@@ -1,50 +1,55 @@
-import * as XLSX from 'xlsx';
-import {Observable} from "rxjs/Rx";
+import parseExcel from "./excel";
+import {html, render} from 'lit-html';
+import {Observable, Subject} from "rxjs/Rx";
 
 namespace feed_converter {
 
   const fileInput: HTMLInputElement = document.querySelector('#file');
+  const logSubj: Subject<string> = new Subject();
 
   const fileSource = Observable.fromEvent(fileInput, 'change')
     .filter((e: TypedEvent<HTMLInputElement>) => e.target.files.length > 0)
     .map((e: TypedEvent<HTMLInputElement>) => e.target.files[0])
-    .map((file:File) => {
+    .do((file:File) => {
+      logSubj.next(`Chosen file: ${file.name}, type: ${file.type}`);
+      logSubj.next(`Uploading started`);
+    })
+    .switchMap((file:File) => {
       const reader = new FileReader();
       reader.readAsBinaryString(file);
       return Observable.fromEvent(reader, 'load');
     })
-    .switch()
-    .map((e:TypedEvent<FileReader>) => e.target.result);
+    .do(() =>
+      logSubj.next(`Uploading finished`)
+    )
+    .map((e:TypedEvent<FileReader>) => e.target.result)
+    .map((data) => parseExcel(data, logSubj));
 
-  fileSource.subscribe((data) => {
-    parseExcel(data);
+
+  fileSource.subscribe((result) => {
+    renderLink(result, "result.json", 'application/json');
   });
 
+  logSubj.subscribe((msg) => {
+    console.log(msg);
+    renderLogMessage(msg);
+  });
 
-  function parseExcel(data: string) {
-    const wb: XLSX.WorkBook = XLSX.read(data, {type: 'binary'});
-    const wsname: string = wb.SheetNames[0];
-    const ws: XLSX.WorkSheet = wb.Sheets[wsname];
-    let list1json = XLSX.utils.sheet_to_json(ws);
-
-    initiateDownload(JSON.stringify(list1json), 'result.json', 'application/json');
-  }
-
-  // Function to download data to a file
-  function initiateDownload(data, filename: string, type) {
+  function renderLink(data, filename: string, type) {
     const file = new Blob([data], {type: type});
-    if (window.navigator.msSaveOrOpenBlob) // IE10+
-      window.navigator.msSaveOrOpenBlob(file, filename);
-    else { // Others
-      let a = document.createElement("a");
-      a.href = URL.createObjectURL(file);
-      a.download = filename;
-      a.textContent = filename;
-      document.body.appendChild(a);
-    }
+    const resTmpURL = URL.createObjectURL(file);
+
+    render(
+      html`<a href="${resTmpURL}" download="${filename}">${filename}</a>`,
+      document.getElementById('results')
+    );
   }
 
+  function renderLogMessage(msg: string) {
+    document.getElementById('console').insertAdjacentHTML('beforeend', `<p>${msg}</p>`);
+  }
 }
+
 
 declare interface TypedEvent<T> extends Event {
   target: T & EventTarget;
