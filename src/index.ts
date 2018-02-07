@@ -1,4 +1,4 @@
-import parseExcel from "./excel";
+import {parseExcel} from "./excel";
 import {html, render} from 'lit-html';
 import {Observable, Subject} from "rxjs/Rx";
 
@@ -36,6 +36,7 @@ namespace feed_converter {
   });
 
   function renderLink(data, filename: string, type) {
+    console.table(data);
     const file = new Blob([data], {type: type});
     const resTmpURL = URL.createObjectURL(file);
 
