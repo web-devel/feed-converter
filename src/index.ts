@@ -1,13 +1,14 @@
-import {parseExcel} from "./excel";
+import {activityHeaders, checkRows, parseExcel, ParsingRes, partnerHeaders} from "./excel";
 import {html, render} from 'lit-html';
 import {Observable, Subject} from "rxjs/Rx";
 
 namespace feed_converter {
 
-  const fileInput: HTMLInputElement = document.querySelector('#file');
+  const fileInputEl: HTMLInputElement = document.querySelector('#file');
+  const consoleEl = document.getElementById('console');
   const logSubj: Subject<string> = new Subject();
 
-  const fileSource = Observable.fromEvent(fileInput, 'change')
+  const fileSource = Observable.fromEvent(fileInputEl, 'change')
     .filter((e: TypedEvent<HTMLInputElement>) => e.target.files.length > 0)
     .map((e: TypedEvent<HTMLInputElement>) => e.target.files[0])
     .do((file:File) => {
@@ -26,8 +27,10 @@ namespace feed_converter {
     .map((data) => parseExcel(data, logSubj));
 
 
-  fileSource.subscribe((result) => {
-    renderLink(result, "result.json", 'application/json');
+  fileSource.subscribe((res: ParsingRes) => {
+    checkRows(res.activities, activityHeaders).forEach(error=> logSubj.next(error));
+    checkRows(res.partners, partnerHeaders).forEach(error=> logSubj.next(error));
+    renderLink(res, "result.json", 'application/json');
   });
 
   logSubj.subscribe((msg) => {
@@ -36,7 +39,6 @@ namespace feed_converter {
   });
 
   function renderLink(data, filename: string, type) {
-    console.table(data);
     const file = new Blob([data], {type: type});
     const resTmpURL = URL.createObjectURL(file);
 
@@ -47,10 +49,10 @@ namespace feed_converter {
   }
 
   function renderLogMessage(msg: string) {
-    document.getElementById('console').insertAdjacentHTML('beforeend', `<p>${msg}</p>`);
+    consoleEl.insertAdjacentHTML('beforeend', `<div>${msg}</div>`);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
   }
 }
-
 
 declare interface TypedEvent<T> extends Event {
   target: T & EventTarget;
