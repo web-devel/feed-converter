@@ -1,5 +1,5 @@
 import {Activity, activityHeaders, ParsingRes, Partner, partnerHeaders} from "./parse";
-import * as moment from "moment";
+import moment from "moment";
 
 export function generateXML({partners, activities}: ParsingRes) {
   return '' +
