@@ -1,6 +1,7 @@
-import {activityHeaders, checkRows, parseExcel, ParsingRes, partnerHeaders} from "./excel";
+import {activityHeaders, checkRows, parseExcel, ParsingRes, partnerHeaders} from "./parse";
 import {html, render} from 'lit-html';
 import {Observable, Subject} from "rxjs/Rx";
+import {generateXML} from "./generate";
 
 namespace feed_converter {
 
@@ -23,14 +24,16 @@ namespace feed_converter {
     .do(() =>
       logSubj.next(`Uploading finished`)
     )
-    .map((e:TypedEvent<FileReader>) => e.target.result)
-    .map((data) => parseExcel(data, logSubj));
+    .map((e:TypedEvent<FileReader>) => e.target.result);
 
 
-  fileSource.subscribe((res: ParsingRes) => {
+  fileSource.subscribe((data: string) => {
+    const res:ParsingRes = parseExcel(data, logSubj);
+
     checkRows(res.activities, activityHeaders).forEach(error=> logSubj.next(error));
     checkRows(res.partners, partnerHeaders).forEach(error=> logSubj.next(error));
-    renderLink(res, "result.json", 'application/json');
+
+    renderLink(generateXML(res), "result.xml", 'text/xml');
   });
 
   logSubj.subscribe((msg) => {
