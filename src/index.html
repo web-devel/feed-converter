@@ -5,23 +5,49 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Feed converter</title>
   <style type="text/css">
+    html, body {
+      margin:0;
+      padding:0;
+      font-family: Arial, Helvetica, serif;
+    }
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #form input[type=file] {
+      background: #EEEEEE;
+      padding: 6px;
+    }
+    .container {
+      box-sizing: border-box;
+      padding: 12px;
+      background: #f5f5f5;
+    }
     #console {
       max-height: 300px;
       overflow-y: auto;
       font-size: 12px;
+      padding: 12px 0;
+    }
+    #results, form {
+      text-align: center;
     }
   </style>
 </head>
 <body>
 
   <div id="app">
-    <form>
-      <input id="file" type="file">
-    </form>
-    <div id="console"></div>
-    <div id="results"></div>
+    <div class="container">
+      <form id="form">
+        <input id="file" type="file">
+      </form>
+      <div id="console"></div>
+      <div id="results"></div>
+    </div>
   </div>
-
 
   <script src="./index.ts"></script>
 

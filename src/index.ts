@@ -2,6 +2,7 @@ import {activityHeaders, checkRows, parseExcel, ParsingRes, partnerHeaders} from
 import {html, render} from 'lit-html';
 import {Observable, Subject} from "rxjs/Rx";
 import {generateXML} from "./generate";
+import moment from "moment";
 
 namespace feed_converter {
 
@@ -28,13 +29,18 @@ namespace feed_converter {
 
 
   fileSource.subscribe((data: string) => {
-    const res:ParsingRes = parseExcel(data, logSubj);
+    try {
+      const res:ParsingRes = parseExcel(data, logSubj);
+      logSubj.next(`Found ${res.partners.length} partners, ${res.activities.length} activities`);
+      checkRows(res.activities, activityHeaders).forEach(error=> logSubj.next(error));
+      checkRows(res.partners, partnerHeaders).forEach(error=> logSubj.next(error));
 
-    checkRows(res.activities, activityHeaders).forEach(error=> logSubj.next(error));
-    checkRows(res.partners, partnerHeaders).forEach(error=> logSubj.next(error));
-
-    renderLink(generateXML(res), "result.xml", 'text/xml');
-  });
+      const generatedXML = generateXML(res);
+      renderLink(generatedXML, `result_${moment().format('DD-MM-YY_HH-mm')}.xml`, 'text/xml');
+    } catch (e) {
+      logSubj.next(`ERROR: ${e}`);
+    }
+  }, error => logSubj.next(`ERROR: ${error}`));
 
   logSubj.subscribe((msg) => {
     console.log(msg);

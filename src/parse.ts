@@ -88,9 +88,9 @@ export function parseExcel(data: string, logSubj: Subject<string>): ParsingRes {
 export function checkRows<T>(rows:T[], headers: typeof activityHeaders | typeof partnerHeaders): string[] {
   const errors = [];
   rows.forEach((row: T, i) => {
-    Object.entries(headers).forEach(([key, value]) => {
-      if (!row.hasOwnProperty(value)) {
-        errors.push(`Row#${i}, column '${value}' is not specified`);
+    Object.entries(headers).forEach(([key, columnHeader]) => {
+      if (!row.hasOwnProperty(columnHeader) && columnHeader !== partnerHeaders.surname) {
+        errors.push(`Row#${i}, column '${columnHeader}' is not specified`);
       }
     });
   });
