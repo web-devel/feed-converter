@@ -1,4 +1,4 @@
-import {Activity, activityHeaders, ParsingRes, Partner, partnerHeaders} from "./parse";
+import {Activity, ActivityHeader, ParsingRes, Partner, PartnerHeader} from "./parse";
 import moment from "moment";
 
 export function generateXML({partners, activities}: ParsingRes) {
@@ -19,21 +19,21 @@ export function generateXML({partners, activities}: ParsingRes) {
 function generateLocations(partners: Partner[]) {
   return partners.reduce((locationsStr, partner)=>
     locationsStr += `
-        <location external_id="${safe(partner[partnerHeaders.id])}" external_partner_id="${safe(partner[partnerHeaders.id])}">
-            <name>${safe(partner[partnerHeaders.club])}</name>
+        <location external_id="${safe(partner[PartnerHeader.id])}" external_partner_id="${safe(partner[PartnerHeader.id])}">
+            <name>${safe(partner[PartnerHeader.club])}</name>
             <location_type value="26"/>
-            <address_line1>${safe(partner[partnerHeaders.addr1])}</address_line1>
-            <city>${safe(partner[partnerHeaders.addr2])}</city>
-            <postcode>${safe(partner[partnerHeaders.postcode])}</postcode>
-            <latitude>${safe(partner[partnerHeaders.lat])}</latitude>
-            <longitude>${safe(partner[partnerHeaders.long])}</longitude>
+            <address_line1>${safe(partner[PartnerHeader.addr1])}</address_line1>
+            <city>${safe(partner[PartnerHeader.addr2])}</city>
+            <postcode>${safe(partner[PartnerHeader.postcode])}</postcode>
+            <latitude>${safe(partner[PartnerHeader.lat])}</latitude>
+            <longitude>${safe(partner[PartnerHeader.long])}</longitude>
         </location>`, '');
 }
 
 function generateOccurrances(act: Activity) {
-  const time = act[activityHeaders.time];
-  const startDateRaw = act[activityHeaders.startDate];
-  const endDateRaw = act[activityHeaders.endDate];
+  const time = act[ActivityHeader.time];
+  const startDateRaw = act[ActivityHeader.startDate];
+  const endDateRaw = act[ActivityHeader.endDate];
 
   if (!time || !startDateRaw || !endDateRaw) {
     return '';
@@ -67,7 +67,7 @@ function generateOccurrances(act: Activity) {
 }
 
 export function parseTimeInterVal(str: string): {start:moment.Moment, end:moment.Moment} | null {
-  const [whole, start, end] = /(\d\d:\d\d) - (\d\d:\d\d)/.exec(str);
+  const [whole = null, start = null, end = null] = /(\d\d:\d\d) - (\d\d:\d\d)/.exec(str) || [];
   if (!start || !end) return null;
   return {
     start: moment(start, 'HH:mm'),
@@ -78,15 +78,15 @@ export function parseTimeInterVal(str: string): {start:moment.Moment, end:moment
 function generateActivities(activities: Activity[]) {
   return activities.reduce((actStr, activity) =>
     actStr += `
-        <activity external_id="${safe(activity[activityHeaders.idActivity])}" external_location_id="${safe(activity[activityHeaders.idLocation])}" external_partner_id="${safe(activity[activityHeaders.idLocation])}">
-            <title>${safe(activity[activityHeaders.event])}</title>
-            <short_description>${safe(activity[activityHeaders.shortDescription])}</short_description>
+        <activity external_id="${safe(activity[ActivityHeader.idActivity])}" external_location_id="${safe(activity[ActivityHeader.idLocation])}" external_partner_id="${safe(activity[ActivityHeader.idLocation])}">
+            <title>${safe(activity[ActivityHeader.event])}</title>
+            <short_description>${safe(activity[ActivityHeader.shortDescription])}</short_description>
             <project_id value="37"/>
             <description>
-                ${safe(activity[activityHeaders.longDescription])}
+                ${safe(activity[ActivityHeader.longDescription])}
             </description>
             <is_free>0</is_free>
-            <cost_information>${safe(activity[activityHeaders.cost])}</cost_information>
+            <cost_information>${safe(activity[ActivityHeader.cost])}</cost_information>
             <occurrences>
                 ${generateOccurrances(activity)}
             </occurrences>
@@ -104,19 +104,19 @@ function generateActivities(activities: Activity[]) {
             <family_friendly>0</family_friendly>
             <activity_type>EVENT</activity_type>
             <contact>
-                <contact_email>${safe(activity[activityHeaders.email])}</contact_email>
-                <contact_phone>${safe(activity[activityHeaders.telephone])}</contact_phone>
+                <contact_email>${safe(activity[ActivityHeader.email])}</contact_email>
+                <contact_phone>${safe(activity[ActivityHeader.telephone])}</contact_phone>
             </contact>
             <photo>
-                <photo_url>${safe(activity[activityHeaders.image])}</photo_url>
-                <photo_description>${safe(activity[activityHeaders.imageDescription])}</photo_description>
+                <photo_url>${safe(activity[ActivityHeader.image])}</photo_url>
+                <photo_description>${safe(activity[ActivityHeader.imageDescription])}</photo_description>
             </photo>
         </activity>
     `, '')
 }
 
 
-function safe(unsafe):string {
+function safe(unsafe: string):string {
   return unsafe
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
